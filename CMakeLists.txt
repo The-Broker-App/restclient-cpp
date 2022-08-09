@@ -36,7 +36,9 @@ include(GoogleTest)
 endif()
 
 find_package(Threads REQUIRED)
+IF (NOT WIN32)
 find_package(CURL REQUIRED)
+ENDIF()
 find_package(jsoncpp)
 
 option(BUILD_SHARED_LIBS "Build shared library." YES)
@@ -62,11 +64,22 @@ list(APPEND restclient-cpp_PUBLIC_HEADERS
 # target_sources(restclient-cpp PRIVATE ${restclient-cpp_PUBLIC_HEADERS})
 set_property(TARGET restclient-cpp PROPERTY
   PUBLIC_HEADER ${restclient-cpp_PUBLIC_HEADERS})
-target_include_directories(restclient-cpp
-    PRIVATE include    
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-)
+
+IF (NOT WIN32)
+  target_include_directories(restclient-cpp
+          PRIVATE include
+          PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+          PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+
+ELSE()
+  target_include_directories(restclient-cpp
+          PRIVATE include
+          PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+          PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+          PUBLIC "C:/ProgramData/chocolatey/lib/curl/tools/curl-7.81.0-win64-mingw/include"
+          )
+ENDIF()
+
 
 if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/version.h.in")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/version.h.in" [=[
@@ -80,10 +93,21 @@ configure_file("${CMAKE_CURRENT_BINARY_DIR}/version.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/include/restclient-cpp/version.h")
 target_include_directories(restclient-cpp PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/include")
 
-target_link_libraries(restclient-cpp
-  PUBLIC CURL::libcurl
-  PUBLIC Threads::Threads
-)
+
+IF (NOT WIN32)
+
+  target_link_libraries(restclient-cpp
+          PUBLIC CURL::libcurl
+          PUBLIC Threads::Threads
+          )
+
+ELSE()
+
+  target_link_libraries(restclient-cpp
+          PUBLIC Threads::Threads
+          )
+ENDIF()
+
 
 include(GNUInstallDirs)
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/restclient-cpp" )
